@@ -1,5 +1,10 @@
 import React from "react";
 
+// CustomTooltip component displays a tooltip for order book chart data points
+// Props:
+//   active: whether the tooltip is active
+//   payload: array of data for the tooltip (bids/asks)
+//   label: price label for the tooltip
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{ dataKey: string; value: number; color: string }>;

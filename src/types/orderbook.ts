@@ -1,3 +1,8 @@
+// Orderbook: represents the current state of the order book (bids and asks)
+// MarketStats: optional market statistics (last price, 24h volume)
+// OrderForm: structure for order simulation form state
+// SimulationResult: result of a simulation for a given delay
+// ActiveSimulation: details of an active simulation order
 export interface Orderbook {
   bids: [number, number][];
   asks: [number, number][];

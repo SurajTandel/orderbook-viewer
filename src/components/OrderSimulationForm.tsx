@@ -2,6 +2,15 @@ import React, { ChangeEvent } from "react";
 import { OrderForm } from "../types/orderbook";
 import { TIMING_OPTIONS } from "../utils/constants";
 
+// OrderSimulationForm component provides a form to simulate order placement scenarios
+// Props:
+//   orderForm: current form state (side, type, price, quantity, delays)
+//   onChange: handler for input/select changes
+//   onDelayChange: handler for timing scenario checkbox changes
+//   onSimulate: handler to trigger simulation
+//   isSimulating: whether a simulation is in progress
+//
+// Renders form fields for side, type, price, quantity, and timing scenarios
 interface OrderSimulationFormProps {
   orderForm: OrderForm;
   onChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;

@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Orderbook Viewer & Simulator
 
-## Getting Started
+A modern web application for visualizing and simulating cryptocurrency order books in real time. Instantly see live market depth from OKX, Bybit, and Deribit, and experiment with simulated trades to understand your potential market impact before you place an order.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 What Does This App Do?
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Live Orderbook Display:** Instantly view the top 15 bid and ask levels from three major crypto exchanges. Switch between venues with a single click.
+- **Order Simulation:** Fill out a simple form to simulate market or limit orders. See exactly where your order would appear in the book, or which levels it would consume.
+- **Visual Feedback:** The app highlights simulated orders and affected order book levels, and provides a market depth chart and imbalance indicator for deeper insight.
+- **Impact Analysis:** Get instant feedback on estimated fill percentage, average fill price, slippage, and warnings for large orders.
+- **Compare Scenarios:** Try different timing delays (immediate, 5s, 10s, 30s) and compare the results side by side.
+- **Responsive Design:** Works great on both desktop and mobile devices.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ Getting Started
 
-## Learn More
+### Prerequisites
+- **Node.js** (v16 or newer): [Download here](https://nodejs.org/)
+- **Git**: [Download here](https://git-scm.com/)
+- (Optional) **VS Code**: [Download here](https://code.visualstudio.com/)
 
-To learn more about Next.js, take a look at the following resources:
+### Setup Steps
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-username/orderbook-viewer.git
+   cd orderbook-viewer
+   ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+4. **Open your browser:**
+   Go to [http://localhost:3000](http://localhost:3000)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+You should now see the Orderbook Viewer running locally!
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ✨ Key Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Multi-Exchange Support:** Toggle between OKX, Bybit, and Deribit order books in real time.
+- **Order Simulation:** Test both market and limit orders, including timing delays, and see their impact visually.
+- **Market Depth Visualization:** Interactive chart shows cumulative buy/sell interest.
+- **Order Book Imbalance:** Visual bar shows the ratio of buy vs. sell liquidity.
+- **Slippage & Impact Alerts:** Get notified if your simulated order would cause significant price movement.
+- **Mobile Friendly:** Fully responsive layout for all devices.
+
+---
+
+## 🧰 Tech Stack
+
+- **Next.js** (React framework)
+- **React** (UI library)
+- **Tailwind CSS** (utility-first styling)
+- **Recharts** (charts and graphs)
+- **Lucide React** (icon set)
+
+---
+
+## ⚡ How It Works & Assumptions
+
+- **No API Keys Needed:** The app connects to public WebSocket APIs for all three exchanges. No registration or authentication required.
+- **Symbol Handling:** Enter symbols in `BASE-QUOTE` format (e.g., `BTC-USDT`). The app automatically reformats them for each exchange's requirements.
+- **Data Consistency:** The app expects the exchanges' WebSocket data formats to match their documentation. If the APIs change, updates may be needed.
+- **Deribit Quantity:** For Deribit, the app converts the reported `amount` (in USD) to base currency by dividing by price, so quantities are always accurate.
+
+---
+
+## 📚 API & Rate Limit Info
+
+- **Official API Docs:**
+  - [OKX](https://www.okx.com/docs-v5/)
+  - [Bybit](https://bybit-exchange.github.io/docs/v5/intro)
+  - [Deribit](https://docs.deribit.com/)
+
+- **WebSocket Connections:**
+  - The app maintains a single WebSocket connection per venue, subscribing to both order book and ticker channels.
+  - When you switch venues, the previous connection is closed and a new one is opened.
+  - Heartbeat (ping) messages are sent at the required intervals to keep connections alive.
+
+- **Rate Limiting:**
+  - Each exchange has its own connection and message rate limits. This app is designed to stay well within those limits for normal use.
+  - Avoid opening many browser tabs/windows to the same venue to prevent hitting connection caps.
+  - If you see connection errors, wait a moment before reconnecting.

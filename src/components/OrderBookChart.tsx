@@ -1,3 +1,8 @@
+// OrderBookChart component renders a depth chart for the order book using recharts
+// Props:
+//   depthChartData: array of data points for the depth chart (price, Bids, Asks)
+//
+// Uses recharts AreaChart to visualize bid and ask depth with gradients and tooltips
 import React from "react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import CustomTooltip from "./CustomTooltip";

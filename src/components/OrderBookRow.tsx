@@ -1,6 +1,18 @@
 import React from "react";
 // TODO: Import TIMING_COLORS from utils/constants once created
 
+// OrderBookRow component displays a single row in the order book (bid or ask)
+// Props:
+//   price: price level
+//   quantity: quantity at this price
+//   total: cumulative total at this price
+//   type: 'bid' or 'ask'
+//   isSimulated: whether this row is part of a simulation
+//   isAffected: whether this row is affected by a simulation
+//   maxTotal: maximum total for bar width calculation
+//   delay: delay category for simulation highlighting
+//
+// TIMING_COLORS: maps delay values to ring color classes for simulated rows
 interface OrderBookRowProps {
   price: number;
   quantity: number;

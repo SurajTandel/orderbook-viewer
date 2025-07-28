@@ -39,6 +39,28 @@ import {
 } from "../utils/constants";
 import { runSimulations } from "../utils/simulation";
 
+// Main page for the Orderbook Viewer app
+// Handles real-time order book data, market stats, and order simulation logic
+//
+// Uses WebSocket to connect to selected exchange venue and updates state accordingly
+// Provides UI for order simulation and visualization
+//
+// State variables:
+//   activeVenue: currently selected exchange
+//   symbol: trading pair symbol
+//   orderbook: current order book data
+//   marketStats: latest market statistics
+//   connectionStatus: WebSocket connection status
+//   lastMessage: timestamp of last received message
+//   orderForm: state for the order simulation form
+//   comparisonResults: results of order simulations
+//   activeSimulation: currently active simulation details
+//   isSimulating: whether a simulation is running
+//
+// Refs:
+//   orderbookRef: keeps latest orderbook for async updates
+//   okxUpdateTimeout, okxLatestOrderbook: throttle updates for OKX
+
 export default function App() {
   const [activeVenue, setActiveVenue] = useState<VenueKey>("bybit");
   const [symbol, setSymbol] = useState<string>("BTC-USDT");
@@ -63,7 +85,7 @@ export default function App() {
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
 
   const orderbookRef = useRef<Orderbook>(orderbook);
-  // Throttle for OKX (move these outside useEffect)
+  // Throttle for OKX
   const okxUpdateTimeout = useRef<NodeJS.Timeout | null>(null);
   const okxLatestOrderbook = useRef<Orderbook>({ bids: [], asks: [] });
 
@@ -72,16 +94,19 @@ export default function App() {
   }, [orderbook]);
 
   useEffect(() => {
+    // Reset state and set connection status when venue or symbol changes
     setOrderbook({ bids: [], asks: [] });
     setMarketStats({});
     setActiveSimulation(null);
     setComparisonResults([]);
     setConnectionStatus("Connecting...");
 
+    // Create WebSocket connection to selected venue
     const wsUrl = VENUES[activeVenue].ws;
     const ws = new WebSocket(wsUrl);
     let heartbeatInterval: ReturnType<typeof setInterval>;
 
+    // Normalize symbol format for each venue
     const getNormalizedSymbol = (venue: VenueKey, sym: string): string => {
       if (venue === "deribit") {
         return `${sym.split("-")[0]}-PERPETUAL`;
@@ -103,6 +128,7 @@ export default function App() {
       try {
         switch (activeVenue) {
           case "okx":
+            // Subscribe to order book and ticker channels for OKX
             bookSubMsg = {
               op: "subscribe",
               args: [{ channel: "books", instId: normalizedSymbol }],
@@ -113,11 +139,13 @@ export default function App() {
             };
             ws.send(JSON.stringify(bookSubMsg));
             ws.send(JSON.stringify(tickerSubMsg));
+            // Send heartbeat ping every 25s
             heartbeatInterval = setInterval(() => {
               if (ws.readyState === WebSocket.OPEN) ws.send("ping");
             }, 25000);
             break;
           case "bybit":
+            // Subscribe to order book and ticker channels for Bybit
             bookSubMsg = {
               op: "subscribe",
               args: [`orderbook.50.${normalizedSymbol}`],
@@ -128,12 +156,14 @@ export default function App() {
             };
             ws.send(JSON.stringify(bookSubMsg));
             ws.send(JSON.stringify(tickerSubMsg));
+            // Send heartbeat ping every 18s
             heartbeatInterval = setInterval(() => {
               if (ws.readyState === WebSocket.OPEN)
                 ws.send(JSON.stringify({ op: "ping" }));
             }, 18000);
             break;
           case "deribit":
+            // Subscribe to order book and ticker channels for Deribit
             bookSubMsg = {
               jsonrpc: "2.0",
               method: "public/subscribe",
@@ -146,6 +176,7 @@ export default function App() {
             };
             ws.send(JSON.stringify(bookSubMsg));
             ws.send(JSON.stringify(tickerSubMsg));
+            // Send heartbeat ping every 5s
             heartbeatInterval = setInterval(() => {
               if (ws.readyState === WebSocket.OPEN)
                 ws.send(
@@ -165,7 +196,7 @@ export default function App() {
     };
 
     ws.onmessage = (event: MessageEvent) => {
-      if (event.data === "pong") return;
+      if (event.data === "pong") return; // Ignore pong replies
       setLastMessage(new Date());
       const data = JSON.parse(event.data);
       if (data.event === "error") {
@@ -176,8 +207,10 @@ export default function App() {
       try {
         switch (activeVenue) {
           case "okx":
+            // Handle OKX order book and ticker updates
             if (data.arg?.channel === "books" && data.data) {
               const ob = data.data[0];
+              // Convert bids/asks from string to number
               const newBids: [number, number][] = ob.bids.map(
                 ([p, q]: [string, string]) => [parseFloat(p), parseFloat(q)]
               );
@@ -185,20 +218,24 @@ export default function App() {
                 ([p, q]: [string, string]) => [parseFloat(p), parseFloat(q)]
               );
               okxLatestOrderbook.current = { bids: newBids, asks: newAsks };
+              // Throttle OKX updates to every 250ms
               if (!okxUpdateTimeout.current) {
                 okxUpdateTimeout.current = setTimeout(() => {
                   setOrderbook(okxLatestOrderbook.current);
                   okxUpdateTimeout.current = null;
-                }, 250); // Throttle to every 250ms
+                }, 250);
               }
             } else if (data.arg?.channel === "tickers" && data.data) {
+              // Update market stats for OKX
               const stats = data.data[0];
               setMarketStats({ last: stats.last, vol24h: stats.volCcy24h });
             }
             break;
           case "bybit":
+            // Handle Bybit order book and ticker updates
             if (data.topic?.startsWith("orderbook")) {
               if (data.type === "snapshot") {
+                // Initial snapshot of order book
                 const ob = data.data;
                 const newBids: [number, number][] = ob.b.map(
                   ([p, q]: [string, string]) => [parseFloat(p), parseFloat(q)]
@@ -208,12 +245,14 @@ export default function App() {
                 );
                 setOrderbook({ bids: newBids, asks: newAsks });
               } else if (data.type === "delta") {
+                // Apply incremental updates (deltas) to order book
                 setOrderbook((currentBook) => {
                   if (
                     currentBook.bids.length === 0 &&
                     currentBook.asks.length === 0
                   )
                     return currentBook;
+                  // Update bids or asks with new/changed/removed levels
                   const updateSide = (
                     currentSide: [number, number][],
                     deltaSide: [string, string][] | undefined
@@ -223,8 +262,8 @@ export default function App() {
                       for (const [priceStr, quantityStr] of deltaSide) {
                         const price = parseFloat(priceStr);
                         if (parseFloat(quantityStr) === 0)
-                          sideMap.delete(price);
-                        else sideMap.set(price, parseFloat(quantityStr));
+                          sideMap.delete(price); // Remove level if quantity is 0
+                        else sideMap.set(price, parseFloat(quantityStr)); // Update/add level
                       }
                     }
                     return Array.from(sideMap.entries());
@@ -237,6 +276,7 @@ export default function App() {
                 });
               }
             } else if (data.topic?.startsWith("tickers")) {
+              // Update market stats for Bybit
               const stats = data.data;
               setMarketStats({
                 last: stats.lastPrice,
@@ -245,9 +285,11 @@ export default function App() {
             }
             break;
           case "deribit":
+            // Handle Deribit order book and ticker updates
             if (data.params?.channel.startsWith("book")) {
               const ob = data.params.data;
               if (ob.type === "snapshot") {
+                // Initial snapshot of order book
                 const newBids: [number, number][] = ob.bids.map(
                   (d: { price: number; amount: number }) => [
                     d.price,
@@ -262,12 +304,14 @@ export default function App() {
                 );
                 setOrderbook({ bids: newBids, asks: newAsks });
               } else if (ob.type === "change") {
+                // Apply incremental updates (deltas) to order book
                 setOrderbook((currentBook) => {
                   if (
                     currentBook.bids.length === 0 &&
                     currentBook.asks.length === 0
                   )
                     return currentBook;
+                  // Update bids or asks with new/changed/removed levels
                   const updateSide = (
                     currentSide: [number, number][],
                     deltaSide: [string, number, number][] | undefined
@@ -276,8 +320,8 @@ export default function App() {
                     if (deltaSide) {
                       for (const [type, price, amount] of deltaSide) {
                         if (type === "new" || type === "change")
-                          sideMap.set(price, amount / price);
-                        else if (type === "delete") sideMap.delete(price);
+                          sideMap.set(price, amount / price); // Add/update level
+                        else if (type === "delete") sideMap.delete(price); // Remove level
                       }
                     }
                     return Array.from(sideMap.entries());
@@ -290,6 +334,7 @@ export default function App() {
                 });
               }
             } else if (data.params?.channel.startsWith("ticker")) {
+              // Update market stats for Deribit
               const stats = data.params.data;
               setMarketStats({
                 last: stats.last_price,
@@ -320,6 +365,7 @@ export default function App() {
     };
   }, [activeVenue, symbol]);
 
+  // Memoize processed bids/asks and max quantity for rendering
   const { bids, asks, maxTotal } = useMemo(() => {
     let processedBids = orderbook.bids.map(([p, q]) => ({
       price: p || 0,
@@ -338,8 +384,10 @@ export default function App() {
       delay: "",
     }));
     if (activeSimulation) {
+      // If a simulation is active, inject simulated order or highlight affected rows
       const { side, price, quantity, type, delay } = activeSimulation;
       if (type === "Limit") {
+        // Insert simulated limit order into bids or asks
         const newOrder = {
           price,
           quantity,
@@ -374,6 +422,7 @@ export default function App() {
           processedAsks = tempAsks;
         }
       } else {
+        // For market orders, highlight affected rows
         let remainingQuantity = quantity;
         if (side === "Buy") {
           processedAsks = processedAsks.map((ask) => {
@@ -396,6 +445,7 @@ export default function App() {
         }
       }
     }
+    // Find max quantity for bar width scaling
     const maxQty = Math.max(
       ...processedBids.slice(0, MAX_LEVELS).map((b) => b.quantity),
       ...processedAsks.slice(0, MAX_LEVELS).map((a) => a.quantity),
@@ -408,6 +458,7 @@ export default function App() {
     };
   }, [orderbook, activeSimulation]);
 
+  // Prepare data for the depth chart (cumulative quantities)
   const depthChartData = useMemo(() => {
     if (bids.length === 0 && asks.length === 0) return [];
     const bidData = bids
@@ -431,6 +482,7 @@ export default function App() {
         };
       })()
     );
+    // Ensure chart lines connect at the spread
     if (bidData.length > 0 && askData.length > 0) {
       const highestBidPoint = bidData[bidData.length - 1];
       const lowestAskPoint = askData[0];
@@ -439,6 +491,7 @@ export default function App() {
     return [...bidData, ...askData];
   }, [bids, asks]);
 
+  // Calculate order book imbalance (bids vs asks)
   const orderBookImbalance = useMemo(() => {
     if (bids.length === 0 && asks.length === 0) return 50;
     const totalBids = bids.reduce((acc, curr) => acc + curr.quantity, 0);
@@ -447,6 +500,7 @@ export default function App() {
     return (totalBids / (totalBids + totalAsks)) * 100;
   }, [bids, asks]);
 
+  // Handle simulation button click
   const handleSimulate = useCallback(async () => {
     const { type, price, quantity, delays } = orderForm;
     const priceNum = parseFloat(price);
@@ -468,6 +522,7 @@ export default function App() {
     setComparisonResults([]);
     setActiveSimulation(null);
 
+    // Run simulation and update results
     const results = await runSimulations(orderForm, orderbookRef.current);
     setComparisonResults(results);
     if (results.length > 0 && results[0].orderDetails) {
@@ -476,9 +531,11 @@ export default function App() {
     setIsSimulating(false);
   }, [orderForm]);
 
+  // Handle form input changes
   const handleFormChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => setOrderForm({ ...orderForm, [e.target.name]: e.target.value });
+  // Handle timing scenario checkbox changes
   const handleDelayChange = (delay: string) => {
     setOrderForm((prev) => {
       const newDelays = prev.delays.includes(delay)
@@ -675,6 +732,7 @@ export default function App() {
                 <h2 className="text-xl font-bold text-white">Market Depth</h2>
                 <BarChart2 className="text-[#64748b]" />
               </div>
+              {/* Depth chart visualization */}
               <OrderBookChart depthChartData={depthChartData} />
             </div>
 
@@ -723,9 +781,7 @@ export default function App() {
                         <div className="space-y-2 text-sm">
                           <MetricRow
                             label="Est. Fill %"
-                            value={`${
-                              result.metrics.fillPercentage?.toFixed(2) || "N/A"
-                            }%`}
+                            value={`${result.metrics.fillPercentage?.toFixed(2) || "N/A"}%`}
                           />
                           <MetricRow
                             label="Avg. Fill Price"
@@ -741,9 +797,7 @@ export default function App() {
                           />
                           <MetricRow
                             label="Slippage"
-                            value={`${
-                              result.metrics.slippage?.toFixed(4) || "N/A"
-                            }%`}
+                            value={`${result.metrics.slippage?.toFixed(4) || "N/A"}%`}
                           />
                           {result.metrics.warning && (
                             <p className="text-yellow-400 text-xs pt-2 font-semibold">

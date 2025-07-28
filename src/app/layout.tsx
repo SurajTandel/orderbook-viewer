@@ -1,3 +1,5 @@
+// Layout file for Next.js app
+// Sets global metadata and wraps all pages with RootLayout
 import type { Metadata } from 'next'
 import "../styles/globals.css"
 

@@ -1,5 +1,10 @@
 import React from "react";
 
+// MarketStat component displays a market statistic with an icon, value, and label
+// Props:
+//   icon: React component for the icon
+//   label: string label for the statistic
+//   value: value to display (string or number)
 interface MarketStatProps {
   icon: React.ElementType;
   label: string;

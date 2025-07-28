@@ -1,5 +1,9 @@
 import React from "react";
 
+// MetricRow component displays a label and its corresponding value in a row
+// Props:
+//   label: string label for the metric
+//   value: value to display (string, number, or null)
 interface MetricRowProps {
   label: string;
   value: string | number | null;

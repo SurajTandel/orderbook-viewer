@@ -1,3 +1,9 @@
+// VenueKey: supported exchange keys
+// Venue: interface for exchange info (name, websocket URL)
+// VENUES: mapping of supported venues and their websocket endpoints
+// MAX_LEVELS: max order book levels to display
+// TIMING_OPTIONS: available timing scenarios for simulation
+// TIMING_COLORS: color classes for timing scenarios
 export type VenueKey = "okx" | "bybit" | "deribit";
 export interface Venue {
   name: string;

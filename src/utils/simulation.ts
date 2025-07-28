@@ -1,5 +1,12 @@
 import { OrderForm, Orderbook, SimulationResult } from "../types/orderbook";
 
+// runSimulations simulates order execution scenarios on the order book
+// Params:
+//   orderForm: order details (side, type, price, quantity, delays)
+//   orderbook: current order book state
+// Returns: Promise of array of SimulationResult for each delay scenario
+//
+// For each delay, simulates order fill logic and calculates fill %, avg price, slippage, and warnings
 export async function runSimulations(orderForm: OrderForm, orderbook: Orderbook): Promise<SimulationResult[]> {
   const { side, type, price, quantity, delays } = orderForm;
   const priceNum = parseFloat(price);
