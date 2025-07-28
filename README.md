@@ -26,7 +26,7 @@ A modern web application for visualizing and simulating cryptocurrency order boo
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/orderbook-viewer.git
+   git clone https://github.com/SurajTandel/orderbook-viewer.git
    cd orderbook-viewer
    ```
 2. **Install dependencies:**
