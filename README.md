@@ -4,7 +4,7 @@ A modern web application for visualizing and simulating cryptocurrency order boo
 
 ---
 
-## 🚀 What Does This App Do?
+## What Does This App Do?
 
 - **Live Orderbook Display:** Instantly view the top 15 bid and ask levels from three major crypto exchanges. Switch between venues with a single click.
 - **Order Simulation:** Fill out a simple form to simulate market or limit orders. See exactly where your order would appear in the book, or which levels it would consume.
@@ -15,7 +15,7 @@ A modern web application for visualizing and simulating cryptocurrency order boo
 
 ---
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 - **Node.js** (v16 or newer): [Download here](https://nodejs.org/)
@@ -44,7 +44,7 @@ You should now see the Orderbook Viewer running locally!
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Multi-Exchange Support:** Toggle between OKX, Bybit, and Deribit order books in real time.
 - **Order Simulation:** Test both market and limit orders, including timing delays, and see their impact visually.
@@ -55,7 +55,7 @@ You should now see the Orderbook Viewer running locally!
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
 - **Next.js** (React framework)
 - **React** (UI library)
@@ -65,7 +65,7 @@ You should now see the Orderbook Viewer running locally!
 
 ---
 
-## ⚡ How It Works & Assumptions
+## How It Works & Assumptions
 
 - **No API Keys Needed:** The app connects to public WebSocket APIs for all three exchanges. No registration or authentication required.
 - **Symbol Handling:** Enter symbols in `BASE-QUOTE` format (e.g., `BTC-USDT`). The app automatically reformats them for each exchange's requirements.
@@ -74,7 +74,7 @@ You should now see the Orderbook Viewer running locally!
 
 ---
 
-## 📚 API & Rate Limit Info
+## API & Rate Limit Info
 
 - **Official API Docs:**
   - [OKX](https://www.okx.com/docs-v5/)
